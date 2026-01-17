@@ -58,6 +58,7 @@ mod tests {
             ("hello".to_string(), Command::Uppercase),
             (" all roads lead to rome! ".to_string(), Command::Trim),
             ("foo".to_string(), Command::Append(1)),
+            ("foo".to_string(), Command::Append(0)), // INFO : I (github.com/matthewoestreich) ADDED THIS!!!
             ("bar".to_string(), Command::Append(5)),
         ];
         let output = transformer(input);
@@ -68,6 +69,7 @@ mod tests {
                 "HELLO",
                 "all roads lead to rome!",
                 "foobar",
+                "foo", // INFO : I (github.com/matthewoestreich) ADDED THIS!!!
                 "barbarbarbarbarbar",
             ]
         );
