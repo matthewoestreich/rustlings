@@ -15,22 +15,69 @@ struct TeamScores {
     goals_conceded: u8,
 }
 
+struct MatchResult<'a> {
+    team_a_name: &'a str,
+    team_b_name: &'a str,
+    team_a_score: u8,
+    team_b_score: u8,
+}
+
+impl<'a> MatchResult<'a> {
+    fn new(team_a_name: &'a str, team_b_name: &'a str, team_a_score: u8, team_b_score: u8) -> Self {
+        Self {
+            team_a_name,
+            team_b_name,
+            team_a_score,
+            team_b_score,
+        }
+    }
+
+    fn insert_into_scores(&self, scores: &mut HashMap<&'a str, TeamScores>) {
+        scores
+            .entry(self.team_a_name)
+            .and_modify(|e| {
+                e.goals_scored += self.team_a_score;
+                e.goals_conceded += self.team_b_score;
+            })
+            .or_insert(TeamScores {
+                goals_scored: self.team_a_score,
+                goals_conceded: self.team_b_score,
+            });
+
+        scores
+            .entry(self.team_b_name)
+            .and_modify(|e| {
+                e.goals_scored += self.team_b_score;
+                e.goals_conceded += self.team_a_score;
+            })
+            .or_insert(TeamScores {
+                goals_scored: self.team_b_score,
+                goals_conceded: self.team_a_score,
+            });
+    }
+}
+
 fn build_scores_table(results: &str) -> HashMap<&str, TeamScores> {
     // The name of the team is the key and its associated struct is the value.
     let mut scores = HashMap::<&str, TeamScores>::new();
 
     for line in results.lines() {
         let mut split_iterator = line.split(',');
-        // NOTE: We use `unwrap` because we didn't deal with error handling yet.
-        let team_1_name = split_iterator.next().unwrap();
-        let team_2_name = split_iterator.next().unwrap();
-        let team_1_score: u8 = split_iterator.next().unwrap().parse().unwrap();
-        let team_2_score: u8 = split_iterator.next().unwrap().parse().unwrap();
-
         // TODO: Populate the scores table with the extracted details.
         // Keep in mind that goals scored by team 1 will be the number of goals
         // conceded by team 2. Similarly, goals scored by team 2 will be the
         // number of goals conceded by team 1.
+
+        // NOTE: We use `unwrap` because we didn't deal with error handling yet.
+        let match_result = MatchResult {
+            // Bc we are using an iterator, the order of these fields matters!!!
+            team_a_name: split_iterator.next().unwrap(),
+            team_b_name: split_iterator.next().unwrap(),
+            team_a_score: split_iterator.next().unwrap().parse().unwrap(),
+            team_b_score: split_iterator.next().unwrap().parse().unwrap(),
+        };
+
+        match_result.insert_into_scores(&mut scores);
     }
 
     scores
@@ -54,9 +101,11 @@ England,Spain,1,0";
     fn build_scores() {
         let scores = build_scores_table(RESULTS);
 
-        assert!(["England", "France", "Germany", "Italy", "Poland", "Spain"]
-            .into_iter()
-            .all(|team_name| scores.contains_key(team_name)));
+        assert!(
+            ["England", "France", "Germany", "Italy", "Poland", "Spain"]
+                .into_iter()
+                .all(|team_name| scores.contains_key(team_name))
+        );
     }
 
     #[test]
