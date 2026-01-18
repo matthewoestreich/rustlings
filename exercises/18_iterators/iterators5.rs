@@ -54,6 +54,8 @@ fn count_collection_iterator(collection: &[HashMap<String, Progress>], value: Pr
     // `collection` is a slice of hash maps.
     // collection = [{ "variables1": Complete, "from_str": None, … },
     //               { "variables2": Complete, … }, … ]
+
+    /* My original solution
     collection.iter().fold(0, |mut out, map| {
         out += map.values().fold(0, |mut acc, val| {
             if *val == value {
@@ -63,6 +65,14 @@ fn count_collection_iterator(collection: &[HashMap<String, Progress>], value: Pr
         });
         out
     })
+    */
+
+    // My optimized solution after Googling.
+    collection
+        .iter()
+        .flat_map(|map| map.values())
+        .filter(|&&v| v == value)
+        .count()
 }
 
 fn main() {
