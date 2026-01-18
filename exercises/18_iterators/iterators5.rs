@@ -28,12 +28,18 @@ fn count_for(map: &HashMap<String, Progress>, value: Progress) -> usize {
 fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
     // `map` is a hash map with `String` keys and `Progress` values.
     // map = { "variables1": Complete, "from_str": None, … }
+
+    /* My original solution
     map.values().fold(0, |mut acc, val| {
         if *val == value {
             acc += 1;
         }
         acc
     })
+    */
+
+    // My optimized solution after Googling
+    map.values().filter(|&&v| v == value).count()
 }
 
 fn count_collection_for(collection: &[HashMap<String, Progress>], value: Progress) -> usize {
