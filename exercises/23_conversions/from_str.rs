@@ -41,7 +41,28 @@ enum ParsePersonError {
 impl FromStr for Person {
     type Err = ParsePersonError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {}
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (name, age) = s.split_once(',').ok_or(ParsePersonError::BadLen)?;
+
+        println!("name={name} age={age:?}");
+
+        if name.is_empty() {
+            return Err(ParsePersonError::NoName);
+        }
+        if name.ends_with(",") || age.contains(",") {
+            return Err(ParsePersonError::BadLen);
+        }
+
+        let age = match age.parse::<u8>() {
+            Ok(a) => a,
+            Err(e) => return Err(ParsePersonError::ParseInt(e)),
+        };
+
+        Ok(Self {
+            name: name.to_string(),
+            age,
+        })
+    }
 }
 
 fn main() {
@@ -70,7 +91,8 @@ mod tests {
 
     #[test]
     fn missing_age() {
-        assert!(matches!("John,".parse::<Person>(), Err(ParseInt(_))));
+        let parsed = "John,".parse::<Person>();
+        assert!(matches!(parsed, Err(ParseInt(_))), "got {parsed:?}");
     }
 
     #[test]
@@ -109,5 +131,11 @@ mod tests {
     #[test]
     fn trailing_comma_and_some_string() {
         assert_eq!("John,32,man".parse::<Person>(), Err(BadLen));
+    }
+
+    // INFO : custom test added by github.com/matthewoestreich
+    #[test]
+    fn two_commas_after_name() {
+        assert_eq!("John,,32".parse::<Person>(), Err(BadLen));
     }
 }
