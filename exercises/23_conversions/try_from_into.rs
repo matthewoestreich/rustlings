@@ -5,7 +5,66 @@
 // https://doc.rust-lang.org/std/convert/trait.TryFrom.html
 
 #![allow(clippy::useless_vec)]
-use std::convert::{TryFrom, TryInto};
+use std::{
+    convert::{TryFrom, TryInto},
+    error::Error,
+    fmt::Display,
+};
+
+//
+// github.com/matthewoestreich added this for testing..
+//
+trait Rgb {
+    type Error: std::error::Error;
+
+    fn is_rgb(&self) -> Result<(), Self::Error>;
+
+    fn is_in_range<T>(n: T) -> bool
+    where
+        T: PartialOrd + Copy + From<u8>,
+    {
+        T::from(0) <= n && n <= T::from(255)
+    }
+}
+
+impl Rgb for (i16, i16, i16) {
+    type Error = IntoColorError;
+
+    fn is_rgb(&self) -> Result<(), Self::Error> {
+        if Self::is_in_range(self.0) && Self::is_in_range(self.1) && Self::is_in_range(self.2) {
+            return Ok(());
+        }
+        Err(IntoColorError::IntConversion)
+    }
+}
+
+impl Rgb for [i16; 3] {
+    type Error = IntoColorError;
+
+    fn is_rgb(&self) -> Result<(), Self::Error> {
+        if Self::is_in_range(self[0]) && Self::is_in_range(self[1]) && Self::is_in_range(self[2]) {
+            return Ok(());
+        }
+        Err(IntoColorError::IntConversion)
+    }
+}
+
+impl Rgb for [i16] {
+    type Error = IntoColorError;
+
+    fn is_rgb(&self) -> Result<(), Self::Error> {
+        if self.len() != 3 {
+            return Err(IntoColorError::BadLen);
+        }
+        if Self::is_in_range(self[0]) && Self::is_in_range(self[1]) && Self::is_in_range(self[2]) {
+            return Ok(());
+        }
+        Err(IntoColorError::IntConversion)
+    }
+}
+//
+// END github.com/matthewoestreich added this for testing..
+//
 
 #[derive(Debug, PartialEq)]
 struct Color {
@@ -23,16 +82,24 @@ enum IntoColorError {
     IntConversion,
 }
 
+impl Display for IntoColorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            IntoColorError::BadLen => write!(f, "IntoColorError::BadLen"),
+            IntoColorError::IntConversion => write!(f, "IntoColorError::IntConversion"),
+        }
+    }
+}
+
+impl Error for IntoColorError {}
+
 // TODO: Tuple implementation.
 // Correct RGB color values must be integers in the 0..=255 range.
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
 
     fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
-        let range = 0..=255;
-        if !range.contains(&tuple.0) || !range.contains(&tuple.1) || !range.contains(&tuple.2) {
-            return Err(IntoColorError::IntConversion);
-        }
+        tuple.is_rgb()?;
 
         Ok(Self {
             red: tuple.0 as u8,
@@ -47,10 +114,7 @@ impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
 
     fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
-        let range = 0..=255;
-        if !range.contains(&arr[0]) || !range.contains(&arr[1]) || !range.contains(&arr[2]) {
-            return Err(IntoColorError::IntConversion);
-        }
+        arr.is_rgb()?;
 
         Ok(Self {
             red: arr[0] as u8,
@@ -66,14 +130,7 @@ impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
 
     fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
-        if slice.len() != 3 {
-            return Err(IntoColorError::BadLen);
-        }
-
-        let range = 0..=255;
-        if !range.contains(&slice[0]) || !range.contains(&slice[1]) || !range.contains(&slice[2]) {
-            return Err(IntoColorError::IntConversion);
-        }
+        slice.is_rgb()?;
 
         Ok(Self {
             red: slice[0] as u8,

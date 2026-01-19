@@ -25,10 +25,10 @@ where
 
 // Squares a number using `as_mut()`.
 // TODO: Add the appropriate trait bound.
-fn num_sq<Outer, Inner>(arg: &mut Outer)
+fn num_sq<T, U>(arg: &mut T)
 where
-    Outer: AsMut<Inner>,
-    Inner: MulAssign + Copy,
+    T: AsMut<U>,
+    U: MulAssign + Copy,
 {
     // TODO: Implement the function body.
     let a = *arg.as_mut();
