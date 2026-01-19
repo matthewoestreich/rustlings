@@ -31,10 +31,10 @@ impl Rgb for (i16, i16, i16) {
     type Error = IntoColorError;
 
     fn is_rgb(&self) -> Result<(), Self::Error> {
-        if Self::is_in_range(self.0) && Self::is_in_range(self.1) && Self::is_in_range(self.2) {
-            return Ok(());
+        match Self::is_in_range(self.0) && Self::is_in_range(self.1) && Self::is_in_range(self.2) {
+            true => Ok(()),
+            false => Err(IntoColorError::IntConversion),
         }
-        Err(IntoColorError::IntConversion)
     }
 }
 
@@ -42,10 +42,11 @@ impl Rgb for [i16; 3] {
     type Error = IntoColorError;
 
     fn is_rgb(&self) -> Result<(), Self::Error> {
-        if Self::is_in_range(self[0]) && Self::is_in_range(self[1]) && Self::is_in_range(self[2]) {
-            return Ok(());
+        match Self::is_in_range(self[0]) && Self::is_in_range(self[1]) && Self::is_in_range(self[2])
+        {
+            true => Ok(()),
+            false => Err(IntoColorError::IntConversion),
         }
-        Err(IntoColorError::IntConversion)
     }
 }
 
@@ -54,12 +55,16 @@ impl Rgb for [i16] {
 
     fn is_rgb(&self) -> Result<(), Self::Error> {
         if self.len() != 3 {
-            return Err(IntoColorError::BadLen);
+            Err(IntoColorError::BadLen)
+        } else {
+            match Self::is_in_range(self[0])
+                && Self::is_in_range(self[1])
+                && Self::is_in_range(self[2])
+            {
+                true => Ok(()),
+                false => Err(IntoColorError::IntConversion),
+            }
         }
-        if Self::is_in_range(self[0]) && Self::is_in_range(self[1]) && Self::is_in_range(self[2]) {
-            return Ok(());
-        }
-        Err(IntoColorError::IntConversion)
     }
 }
 //
