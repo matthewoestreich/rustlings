@@ -14,17 +14,17 @@ use std::{
 //
 // github.com/matthewoestreich added this for testing..
 //
-trait RgbChannelValue
+trait RgbValue
 where
     Self: PartialOrd + Copy + From<u8>,
 {
     /// Checks if `[self]` is within `(0..=255)` range.
-    fn is_valid_rgb(&self) -> bool {
+    fn is_rgb_value(&self) -> bool {
         (Self::from(0)..=Self::from(255)).contains(self)
     }
 }
 
-impl RgbChannelValue for i16 {}
+impl RgbValue for i16 {}
 
 trait Rgb {
     type Error: std::error::Error;
@@ -37,7 +37,7 @@ impl Rgb for (i16, i16, i16) {
 
     fn is_rgb(&self) -> Result<(), Self::Error> {
         for &i in [self.0, self.1, self.2].iter() {
-            if !i.is_valid_rgb() {
+            if !i.is_rgb_value() {
                 return Err(IntoColorError::IntConversion);
             }
         }
@@ -50,7 +50,7 @@ impl Rgb for [i16; 3] {
 
     fn is_rgb(&self) -> Result<(), Self::Error> {
         for &i in self[0..3].iter() {
-            if !i.is_valid_rgb() {
+            if !i.is_rgb_value() {
                 return Err(IntoColorError::IntConversion);
             }
         }
@@ -66,7 +66,7 @@ impl Rgb for [i16] {
             return Err(IntoColorError::BadLen);
         }
         for &i in self[0..3].iter() {
-            if !i.is_valid_rgb() {
+            if !i.is_rgb_value() {
                 return Err(IntoColorError::IntConversion);
             }
         }
