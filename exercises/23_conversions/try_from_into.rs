@@ -14,27 +14,34 @@ use std::{
 //
 // github.com/matthewoestreich added this for testing..
 //
+trait RgbChannelValue
+where
+    Self: PartialOrd + Copy + From<u8>,
+{
+    /// Checks if `[self]` is within `(0..=255)` range.
+    fn is_valid_rgb(&self) -> bool {
+        (Self::from(0)..=Self::from(255)).contains(self)
+    }
+}
+
+impl RgbChannelValue for i16 {}
+
 trait Rgb {
     type Error: std::error::Error;
 
     fn is_rgb(&self) -> Result<(), Self::Error>;
-
-    fn is_in_range<T>(n: T) -> bool
-    where
-        T: PartialOrd + Copy + From<u8>,
-    {
-        T::from(0) <= n && n <= T::from(255)
-    }
 }
 
 impl Rgb for (i16, i16, i16) {
     type Error = IntoColorError;
 
     fn is_rgb(&self) -> Result<(), Self::Error> {
-        match Self::is_in_range(self.0) && Self::is_in_range(self.1) && Self::is_in_range(self.2) {
-            true => Ok(()),
-            false => Err(IntoColorError::IntConversion),
+        for &i in [self.0, self.1, self.2].iter() {
+            if !i.is_valid_rgb() {
+                return Err(IntoColorError::IntConversion);
+            }
         }
+        Ok(())
     }
 }
 
@@ -42,11 +49,12 @@ impl Rgb for [i16; 3] {
     type Error = IntoColorError;
 
     fn is_rgb(&self) -> Result<(), Self::Error> {
-        match Self::is_in_range(self[0]) && Self::is_in_range(self[1]) && Self::is_in_range(self[2])
-        {
-            true => Ok(()),
-            false => Err(IntoColorError::IntConversion),
+        for &i in self[0..3].iter() {
+            if !i.is_valid_rgb() {
+                return Err(IntoColorError::IntConversion);
+            }
         }
+        Ok(())
     }
 }
 
@@ -55,16 +63,14 @@ impl Rgb for [i16] {
 
     fn is_rgb(&self) -> Result<(), Self::Error> {
         if self.len() != 3 {
-            Err(IntoColorError::BadLen)
-        } else {
-            match Self::is_in_range(self[0])
-                && Self::is_in_range(self[1])
-                && Self::is_in_range(self[2])
-            {
-                true => Ok(()),
-                false => Err(IntoColorError::IntConversion),
+            return Err(IntoColorError::BadLen);
+        }
+        for &i in self[0..3].iter() {
+            if !i.is_valid_rgb() {
+                return Err(IntoColorError::IntConversion);
             }
         }
+        Ok(())
     }
 }
 //
